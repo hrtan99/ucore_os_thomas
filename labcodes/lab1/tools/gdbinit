@@ -1,0 +1,7 @@
+file bin/kernel
+set architecture i8086
+target remote :1234
+break bootmain
+
+x/i $pc
+end
