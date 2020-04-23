@@ -1,7 +1,6 @@
 #include <defs.h>
 #include <x86.h>
 #include <elf.h>
-
 /* *********************************************************************
  * This a dirt simple boot loader, whose sole job is to boot
  * an ELF kernel image from the first IDE hard disk.
@@ -70,7 +69,6 @@ readseg(uintptr_t va, uint32_t count, uint32_t offset) {
 
     // round down to sector boundary
     va -= offset % SECTSIZE;
-
     // translate from bytes to sectors; kernel starts at sector 1
     uint32_t secno = (offset / SECTSIZE) + 1;
 
@@ -79,6 +77,7 @@ readseg(uintptr_t va, uint32_t count, uint32_t offset) {
     // we load in increasing order.
     for (; va < end_va; va += SECTSIZE, secno ++) {
         readsect((void *)va, secno);
+
     }
 }
 
@@ -113,4 +112,3 @@ bad:
     /* do nothing */
     while (1);
 }
-
