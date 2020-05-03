@@ -12,6 +12,7 @@
 int kern_init(void) __attribute__((noreturn));
 void grade_backtrace(void);
 static void lab1_switch_test(void);
+static void lab1_print_cur_status(void);
 
 int
 kern_init(void) {
@@ -37,10 +38,17 @@ kern_init(void) {
 
     //LAB1: CAHLLENGE 1 If you try to do it, uncomment lab1_switch_test()
     // user/kernel mode switch test
-    //lab1_switch_test();
+    lab1_switch_test();
 
     /* do nothing */
-    while (1);
+    int i=0;
+    while (1){
+      if(i == 50){
+        lab1_print_cur_status();
+        i = 0;continue;
+      }
+      i++;
+    }
 }
 
 void __attribute__((noinline))
@@ -84,11 +92,29 @@ lab1_print_cur_status(void) {
 static void
 lab1_switch_to_user(void) {
     //LAB1 CHALLENGE 1 : TODO
+    //调用切换到用户态的中断
+    asm volatile("pushl %ss");
+    asm volatile("pushl %esp");
+    asm volatile(
+      "int $120"
+    );
+    asm volatile("addl $0x4, %esp");
+    //cprintf("int 120 returns!\n");
 }
 
 static void
 lab1_switch_to_kernel(void) {
     //LAB1 CHALLENGE 1 :  TODO
+    //调用切换到内核态的中断
+  //  asm volatile("pushl %ss");
+    //asm volatile("pushl %esp");
+    asm volatile(
+      "int $121"
+    );
+    asm volatile("popl %esp");
+    // asm volatile("addl $0x4, %esp");
+    //cprintf("int 120 returns!\n");
+
 }
 
 static void
@@ -101,4 +127,3 @@ lab1_switch_test(void) {
     lab1_switch_to_kernel();
     lab1_print_cur_status();
 }
-

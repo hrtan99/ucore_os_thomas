@@ -11,7 +11,7 @@
 #define FL_IF            0x00000200    // Interrupt Flag
 #define FL_DF            0x00000400    // Direction Flag
 #define FL_OF            0x00000800    // Overflow Flag
-#define FL_IOPL_MASK    0x00003000    // I/O Privilege Level bitmask
+#define FL_IOPL_MASK     0x00003000    // I/O Privilege Level bitmask
 #define FL_IOPL_0        0x00000000    //   IOPL == 0
 #define FL_IOPL_1        0x00001000    //   IOPL == 1
 #define FL_IOPL_2        0x00002000    //   IOPL == 2
@@ -20,8 +20,8 @@
 #define FL_RF            0x00010000    // Resume Flag
 #define FL_VM            0x00020000    // Virtual 8086 mode
 #define FL_AC            0x00040000    // Alignment Check
-#define FL_VIF            0x00080000    // Virtual Interrupt Flag
-#define FL_VIP            0x00100000    // Virtual Interrupt Pending
+#define FL_VIF           0x00080000    // Virtual Interrupt Flag
+#define FL_VIP           0x00100000    // Virtual Interrupt Pending
 #define FL_ID            0x00200000    // ID flag
 
 /* Application segment type bits */
@@ -34,10 +34,10 @@
 
 /* System segment type bits */
 #define STS_T16A        0x1            // Available 16-bit TSS
-#define STS_LDT            0x2            // Local Descriptor Table
+#define STS_LDT         0x2            // Local Descriptor Table
 #define STS_T16B        0x3            // Busy 16-bit TSS
 #define STS_CG16        0x4            // 16-bit Call Gate
-#define STS_TG            0x5            // Task Gate / Coum Transmitions
+#define STS_TG          0x5            // Task Gate / Coum Transmitions
 #define STS_IG16        0x6            // 16-bit Interrupt Gate
 #define STS_TG16        0x7            // 16-bit Trap Gate
 #define STS_T32A        0x9            // Available 32-bit TSS
@@ -120,7 +120,7 @@ struct segdesc {
         (unsigned)(lim) >> 28, 0, 0, 1, 1,                \
         (unsigned) (base) >> 24                            \
     }
-
+//SEG16与SEG宏不一样的地方就在于SEG16传入的lim正好就是段界限的大小
 #define SEG16(type, base, lim, dpl)                        \
     (struct segdesc){                                    \
         (lim) & 0xffff, (base) & 0xffff,                \
@@ -171,4 +171,3 @@ struct taskstate {
 };
 
 #endif /* !__KERN_MM_MMU_H__ */
-

@@ -80,6 +80,16 @@ gdt_init(void) {
     ts.ts_esp0 = (uint32_t)&stack0 + sizeof(stack0);
     ts.ts_ss0 = KERNEL_DS;
 
+    asm volatile(
+      "movl %%esp, %0"
+      :"=r"(ts.ts_esp)
+      :
+    );
+    ts.ts_ss = USER_DS;
+
+    cprintf("ts_esp: 0x%08x \n", &ts.ts_esp0);
+
+    //SEG16与SEG宏不一样的地方就在于SEG16传入的lim正好就是段界限的大小
     // initialize the TSS filed of the gdt
     gdt[SEG_TSS] = SEG16(STS_T32A, (uint32_t)&ts, sizeof(ts), DPL_KERNEL);
     gdt[SEG_TSS].sd_s = 0;
@@ -96,4 +106,3 @@ void
 pmm_init(void) {
     gdt_init();
 }
-

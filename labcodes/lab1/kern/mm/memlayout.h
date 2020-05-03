@@ -8,7 +8,7 @@
 #define SEG_KDATA    2
 #define SEG_UTEXT    3
 #define SEG_UDATA    4
-#define SEG_TSS        5
+#define SEG_TSS      5
 
 /* global descriptor numbers */
 #define GD_KTEXT    ((SEG_KTEXT) << 3)        // kernel text
@@ -26,4 +26,3 @@
 #define USER_DS        ((GD_UDATA) | DPL_USER)
 
 #endif /* !__KERN_MM_MEMLAYOUT_H__ */
-

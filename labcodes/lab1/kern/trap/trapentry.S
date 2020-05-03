@@ -10,6 +10,7 @@ __alltraps:
     pushl %es
     pushl %fs
     pushl %gs
+    #	Push AX, CX, DX, BX, original SP, BP, SI, and DI.
     pushal
 
     # load GD_KDATA into %ds and %es to set up data segments for kernel
@@ -19,7 +20,6 @@ __alltraps:
 
     # push %esp to pass a pointer to the trapframe as an argument to trap()
     pushl %esp
-
     # call trap(tf), where tf=%esp
     call trap
 
@@ -40,5 +40,5 @@ __trapret:
 
     # get rid of the trap number and error code
     addl $0x8, %esp
-    iret
 
+    iret
