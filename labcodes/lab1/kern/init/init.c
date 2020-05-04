@@ -41,13 +41,8 @@ kern_init(void) {
     lab1_switch_test();
 
     /* do nothing */
-    int i=0;
     while (1){
-      if(i == 50){
-        lab1_print_cur_status();
-        i = 0;continue;
-      }
-      i++;
+
     }
 }
 
