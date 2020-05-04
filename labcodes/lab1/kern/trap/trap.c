@@ -171,7 +171,7 @@ trap_dispatch(struct trapframe *tf) {
         c = cons_getc();
         cprintf("serial [%03d] %c\n", c, c);
         break;
-    /*case IRQ_OFFSET + IRQ_KBD:
+    case IRQ_OFFSET + IRQ_KBD:
         c = cons_getc();
         if(c == '3'){
           //切换到用户态
@@ -201,7 +201,7 @@ trap_dispatch(struct trapframe *tf) {
 
         }
         cprintf("kbd [%03d] %c\n", c, c);
-        break;*/
+        break;
     //LAB1 CHALLENGE 1 : YOUR CODE you should modify below codes.
     case T_SWITCH_TOU:
         // cprintf("now in interrupt\n");
@@ -214,9 +214,6 @@ trap_dispatch(struct trapframe *tf) {
         tf->tf_es = USER_DS;
         tf->tf_ss = USER_DS;
         tf->tf_eflags = tf->tf_eflags | FL_IOPL_3;
-        // cprintf("%d ticks\n", &ticks);
-        print_ticks();
-        // print_trapframe(tf);
         break;
 
     case T_SWITCH_TOK:
@@ -252,39 +249,6 @@ trap_dispatch(struct trapframe *tf) {
 void
 trap(struct trapframe *tf) {
     // dispatch based on what type of trap occurred
-    if(tf->tf_trapno == IRQ_OFFSET + IRQ_KBD){
-      char c = cons_getc();
-      if(c == '3'){
-        //切换到用户态
-        //首先获得当前esp的地址
-        uintptr_t *p;
-        asm volatile(
-          "movl %%esp, %0\n\t"
-          "sub $0x8, %%esp"
-          :"=r"(p)
-          :
-        );
-        //将当前tf全部向下移动8个字节，给ss和esp留出空间
-        for(;p!=&tf->tf_esp;p=p+1){
-          *(p-2) = * (p);
-        }
-        tf -= 2;
-
-        tf->tf_esp = (tf->tf_regs).reg_ebp;
-
-        tf->tf_cs = USER_CS;
-        tf->tf_ds = USER_DS;
-        tf->tf_es = USER_DS;
-        tf->tf_ss = USER_DS;
-        tf->tf_eflags = tf->tf_eflags | FL_IOPL_3;
-      }
-      else if(c == '0'){
-
-      }
-      cprintf("kbd [%03d] %c\n", c, c);
-      return;
-    }
-
     trap_dispatch(tf);
     // cprintf("in trap function\n");
 }
