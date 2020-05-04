@@ -17,6 +17,7 @@ static void lab1_switch_test(void);
 int
 kern_init(void) {
     extern char edata[], end[];
+    //将edata到end的内存全部置0
     memset(edata, 0, end - edata);
 
     cons_init();                // init the console

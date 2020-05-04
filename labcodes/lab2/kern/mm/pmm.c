@@ -352,18 +352,51 @@ get_pte(pde_t *pgdir, uintptr_t la, bool create) {
      *   PTE_W           0x002                   // page table/directory entry flags bit : Writeable
      *   PTE_U           0x004                   // page table/directory entry flags bit : User can access
      */
-#if 0
-    pde_t *pdep = NULL;   // (1) find page directory entry
-    if (0) {              // (2) check if entry is not present
-                          // (3) check if creating is needed, then alloc page for page table
-                          // CAUTION: this page is used for page table, not for common data page
-                          // (4) set page reference
-        uintptr_t pa = 0; // (5) get linear address of page
-                          // (6) clear page content using memset
-                          // (7) set page directory entry's permission
+
+            // (1) find page directory entry
+            // (2) check if entry is not present
+            // (3) check if creating is needed, then alloc page for page table
+            // CAUTION: this page is used for page table, not for common data page
+            // (4) set page reference
+            // (5) get linear address of page
+            // (6) clear page content using memset
+            // (7) set page directory entry's permission
+            // (8) return page table entry
+    // 页目录表和页表的下标
+    uint32_t pageDirectoryIndex = PDX(la);
+    uint32_t pageTableIndex = PTX(la);
+    // 得到页目录表的表项
+    pde_t* pageDirEnrty =  pgdir + pageDirectoryIndex;
+    pte_t* pageTableEntry;
+    //若p位为0，则检查create
+    if((*pageDirEnrty & PTE_P) != PTE_P){
+        if(create){
+          //申请新页
+          struct Page* newPage = alloc_page();
+          // set_page_ref(newPage, 1);
+          page_ref_inc(newPage);
+          uintptr_t* newPageTablePhysicAddr = page2pa(newPage);
+
+          //设置页目录表项 高20位是新页表的物理地址 将低三位置位
+          *pageDirEnrty = (uint32_t)newPageTablePhysicAddr & 0xFFFFF000 | PTE_P | PTE_W | PTE_U;
+          // 把新页表全部置0
+          memset(KADDR(newPageTablePhysicAddr), 0, PGSIZE);
+          // 得到新页表的页表项
+          pageTableEntry = (pte_t*)KADDR(newPageTablePhysicAddr) + pageTableIndex;
+          // cprintf("pageTableEntry: %08x", *pageTableEntry);
+          return pageTableEntry;
+        }
+        else{
+          return NULL;
+        }
     }
-    return NULL;          // (8) return page table entry
-#endif
+
+
+    // 得到页表的物理地址
+    pte_t* pageTablePhysicAddr = *pageDirEnrty & 0xFFFFF000;
+    // 根据虚地址索引得到得到页表项
+    pageTableEntry = (pte_t*)KADDR(pageTablePhysicAddr) + pageTableIndex;
+    return pageTableEntry;
 }
 
 //get_page - get related Page struct for linear address la using PDT pgdir
@@ -400,15 +433,29 @@ page_remove_pte(pde_t *pgdir, uintptr_t la, pte_t *ptep) {
      * DEFINEs:
      *   PTE_P           0x001                   // page table/directory entry flags bit : Present
      */
-#if 0
-    if (0) {                      //(1) check if this page table entry is present
-        struct Page *page = NULL; //(2) find corresponding page to pte
-                                  //(3) decrease page reference
-                                  //(4) and free this page when page reference reachs 0
-                                  //(5) clear second page table entry
-                                  //(6) flush tlb
-    }
-#endif
+
+          //(1) check if this page table entry is present
+          //(2) find corresponding page to pte
+          //(3) decrease page reference
+          //(4) and free this page when page reference reachs 0
+          //(5) clear second page table entry
+          //(6) flush tlb
+
+
+      //如果p位存在
+      if((*ptep & PTE_P) == PTE_P){
+          // 得到物理地址
+          struct Page* page = pte2page(*ptep);
+          page_ref_dec(page);
+          if(!page_ref(page)){
+            free_page(page);
+
+          }
+          *ptep = 0;
+          tlb_invalidate(pgdir, la);
+      }
+
+
 }
 
 //page_remove - free an Page which is related linear address la and has an validated pte
@@ -480,6 +527,7 @@ check_pgdir(void) {
     assert(page_ref(p1) == 1);
 
     ptep = &((pte_t *)KADDR(PDE_ADDR(boot_pgdir[0])))[1];
+    cprintf("ptep:%08x", ptep);
     assert(get_pte(boot_pgdir, PGSIZE, 0) == ptep);
 
     p2 = alloc_page();
