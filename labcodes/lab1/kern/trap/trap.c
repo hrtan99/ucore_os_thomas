@@ -46,6 +46,17 @@ idt_init(void) {
       *     You don't know the meaning of this instruction? just google it! and check the libs/x86.h to know more.
       *     Notice: the argument of lidt is idt_pd. try to find it!
       */
+      // cprintf("in idt_init function\n");
+      extern uintptr_t __vectors[];
+      int i;
+      for(i=0; i<256; i++){
+        SETGATE(idt[i], 0, 8, __vectors[i], 0);
+      }
+      lidt(&idt_pd);
+      SETGATE(idt[121],0,8,__vectors[121],3);
+
+
+
 }
 
 static const char *
@@ -115,10 +126,13 @@ print_trapframe(struct trapframe *tf) {
         }
     }
     cprintf("IOPL=%d\n", (tf->tf_eflags & FL_IOPL_MASK) >> 12);
-
-    if (!trap_in_kernel(tf)) {
+    if(1){
+//    if (!trap_in_kernel(tf)) {
         cprintf("  esp  0x%08x\n", tf->tf_esp);
         cprintf("  ss   0x----%04x\n", tf->tf_ss);
+        cprintf("  ss+4 0x%08x\n", &tf->tf_ss+4);
+        cprintf("  ss+8 0x%08x\n", &tf->tf_ss+8);
+
     }
 }
 
@@ -147,24 +161,80 @@ trap_dispatch(struct trapframe *tf) {
          * (2) Every TICK_NUM cycle, you can print some info using a funciton, such as print_ticks().
          * (3) Too Simple? Yes, I think so!
          */
+         // cprintf("in timer interrupt function\n");
+         if(++ticks==100){
+           print_ticks();
+           ticks=0;
+         }
         break;
     case IRQ_OFFSET + IRQ_COM1:
         c = cons_getc();
         cprintf("serial [%03d] %c\n", c, c);
         break;
-    case IRQ_OFFSET + IRQ_KBD:
+    /*case IRQ_OFFSET + IRQ_KBD:
         c = cons_getc();
+        if(c == '3'){
+          //切换到用户态
+          //首先获得当前esp的地址
+          uintptr_t *p;
+          asm volatile(
+            "movl %%esp, %0\n\t"
+            "sub $0x8, %%esp"
+            :"=r"(p)
+            :
+          );
+          //将当前tf全部向下移动8个字节，给ss和esp留出空间
+          for(;p!=&tf->tf_esp;p=p+1){
+            *(p-2) = * (p);
+          }
+          tf -= 2;
+
+          tf->tf_esp = (tf->tf_regs).reg_ebp;
+
+          tf->tf_cs = USER_CS;
+          tf->tf_ds = USER_DS;
+          tf->tf_es = USER_DS;
+          tf->tf_ss = USER_DS;
+          tf->tf_eflags = tf->tf_eflags | FL_IOPL_3;
+        }
+        else if(c == '0'){
+
+        }
         cprintf("kbd [%03d] %c\n", c, c);
-        break;
+        break;*/
     //LAB1 CHALLENGE 1 : YOUR CODE you should modify below codes.
     case T_SWITCH_TOU:
+        // cprintf("now in interrupt\n");
+         // print_trapframe(tf);
+        /*asm volatile("movl %%ax, %%cs\n\t"::"a"(GD_UTEXT));
+        asm volatile("movl %%ax, %%ds\n\t"::"a"(GD_UDATA));*/
+
+        tf->tf_cs = USER_CS;
+        tf->tf_ds = USER_DS;
+        tf->tf_es = USER_DS;
+        tf->tf_ss = USER_DS;
+        tf->tf_eflags = tf->tf_eflags | FL_IOPL_3;
+        // cprintf("%d ticks\n", &ticks);
+        print_ticks();
+        // print_trapframe(tf);
+        break;
+
     case T_SWITCH_TOK:
-        panic("T_SWITCH_** ??\n");
+         // print_trapframe(tf);
+        tf->tf_cs = KERNEL_CS;
+        tf->tf_ds = KERNEL_DS;
+        tf->tf_es = KERNEL_DS;
+        tf->tf_ss = KERNEL_DS;
+        tf->tf_eflags = tf->tf_eflags ^ FL_IOPL_3;
+         // print_trapframe(tf);
+        // panic("T_SWITCH_** ??\n");
         break;
     case IRQ_OFFSET + IRQ_IDE1:
     case IRQ_OFFSET + IRQ_IDE2:
         /* do nothing */
         break;
+    case T_GPFLT:
+      cprintf("general protection exception!");
     default:
         // in kernel, it must be a mistake
         if ((tf->tf_cs & 3) == 0) {
@@ -182,6 +252,39 @@ trap_dispatch(struct trapframe *tf) {
 void
 trap(struct trapframe *tf) {
     // dispatch based on what type of trap occurred
-    trap_dispatch(tf);
-}
+    if(tf->tf_trapno == IRQ_OFFSET + IRQ_KBD){
+      char c = cons_getc();
+      if(c == '3'){
+        //切换到用户态
+        //首先获得当前esp的地址
+        uintptr_t *p;
+        asm volatile(
+          "movl %%esp, %0\n\t"
+          "sub $0x8, %%esp"
+          :"=r"(p)
+          :
+        );
+        //将当前tf全部向下移动8个字节，给ss和esp留出空间
+        for(;p!=&tf->tf_esp;p=p+1){
+          *(p-2) = * (p);
+        }
+        tf -= 2;
 
+        tf->tf_esp = (tf->tf_regs).reg_ebp;
+
+        tf->tf_cs = USER_CS;
+        tf->tf_ds = USER_DS;
+        tf->tf_es = USER_DS;
+        tf->tf_ss = USER_DS;
+        tf->tf_eflags = tf->tf_eflags | FL_IOPL_3;
+      }
+      else if(c == '0'){
+
+      }
+      cprintf("kbd [%03d] %c\n", c, c);
+      return;
+    }
+
+    trap_dispatch(tf);
+    // cprintf("in trap function\n");
+}

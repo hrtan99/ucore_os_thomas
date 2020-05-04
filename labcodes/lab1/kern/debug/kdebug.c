@@ -306,14 +306,14 @@ print_stackframe(void) {
      //读取ebp eip的值
     uint32_t ebp = read_ebp();
     uint32_t eip = read_eip();
-    
+
     //两个临时变量i，j
     uint32_t i, j, k, count;
     //让i等于当前ebp寄存器的内容，也就是上一层ebp值的地址。
     //让j等于当前eip寄存器的内容，也就是当前的函数返回地址。
     //当i!=0也就是ebp不等于0时循环。
     //每次让i的值变为上一层ebp的值。
-    for(i=ebp, j=eip, count=0; i!=0 && count<STACKFRAME_DEPTH; i=*(uint32_t *)i, j=*(uint32_t *)(i+4), count++){
+    for(i=ebp, j=eip, count=0; i!=0 && count<STACKFRAME_DEPTH; j=*(uint32_t *)(i+4), i=*(uint32_t *)i, count++){
         //输出当前ebp，eip的值
         cprintf("ebp: 0x%08x eip: 0x%08x ", i, j);
         //四个参数的占位符
@@ -325,11 +325,11 @@ print_stackframe(void) {
         cprintf("\n");
         //打印当前eip-1
         print_debuginfo(j-1);
-        
+
 
     }
 
-    
+
 
 
 
@@ -338,4 +338,3 @@ print_stackframe(void) {
 
 
 }
-
