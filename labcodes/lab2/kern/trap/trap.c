@@ -175,8 +175,6 @@ trap_dispatch(struct trapframe *tf) {
         tf->tf_es = USER_DS;
         tf->tf_ss = USER_DS;
         tf->tf_eflags = tf->tf_eflags | FL_IOPL_3;
-        // cprintf("%d ticks\n", &ticks);
-        print_ticks();
         break;
     case T_SWITCH_TOK:
         tf->tf_cs = KERNEL_CS;

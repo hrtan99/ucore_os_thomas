@@ -3,3 +3,4 @@ set architecture i8086
 target remote :1234
 break kern/mm/pmm.c:537
 break kern_init
+break 42
