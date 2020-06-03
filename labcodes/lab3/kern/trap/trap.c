@@ -48,6 +48,13 @@ idt_init(void) {
       *     You don't know the meaning of this instruction? just google it! and check the libs/x86.h to know more.
       *     Notice: the argument of lidt is idt_pd. try to find it!
       */
+     extern uintptr_t __vectors[];
+      int i;
+      for(i=0; i<256; i++){
+        SETGATE(idt[i], 0, 8, __vectors[i], 0);
+      }
+      lidt(&idt_pd);
+      SETGATE(idt[121],0,8,__vectors[121],3);
 }
 
 static const char *
@@ -197,8 +204,19 @@ trap_dispatch(struct trapframe *tf) {
         break;
     //LAB1 CHALLENGE 1 : YOUR CODE you should modify below codes.
     case T_SWITCH_TOU:
+        tf->tf_cs = USER_CS;
+        tf->tf_ds = USER_DS;
+        tf->tf_es = USER_DS;
+        tf->tf_ss = USER_DS;
+        tf->tf_eflags = tf->tf_eflags | FL_IOPL_3;
+        break;
     case T_SWITCH_TOK:
-        panic("T_SWITCH_** ??\n");
+        tf->tf_cs = KERNEL_CS;
+        tf->tf_ds = KERNEL_DS;
+        tf->tf_es = KERNEL_DS;
+        tf->tf_ss = KERNEL_DS;
+        tf->tf_eflags = tf->tf_eflags ^ FL_IOPL_3;
+        // panic("T_SWITCH_** ??\n");
         break;
     case IRQ_OFFSET + IRQ_IDE1:
     case IRQ_OFFSET + IRQ_IDE2:

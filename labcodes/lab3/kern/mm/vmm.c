@@ -364,11 +364,17 @@ do_pgfault(struct mm_struct *mm, uint32_t error_code, uintptr_t addr) {
     *   mm->pgdir : the PDT of these vma
     *
     */
-#if 0
+
     /*LAB3 EXERCISE 1: YOUR CODE*/
-    ptep = ???              //(1) try to find a pte, if pte's PT(Page Table) isn't existed, then create a PT.
+    // 根据虚拟地址得到对应的pte，没有就进行创建
+    ptep = get_pte(mm->pgdir, addr, 1);              //(1) try to find a pte, if pte's PT(Page Table) isn't existed, then create a PT.
+    struct Page* allocedPage = NULL;                 //如果页表项不存在，用来存储返回的页
+
     if (*ptep == 0) {
                             //(2) if the phy addr isn't exist, then alloc a page & map the phy addr with logical addr
+        // 调用pmm.h --->  struct Page *pgdir_alloc_page(pde_t *pgdir, uintptr_t la, uint32_t perm);
+        pgdir_alloc_page(mm->pgdir, addr, perm | PTE_P);
+
 
     }
     else {
@@ -389,13 +395,14 @@ do_pgfault(struct mm_struct *mm, uint32_t error_code, uintptr_t addr) {
                                     //    into the memory which page managed.
                                     //(2) According to the mm, addr AND page, setup the map of phy addr <---> logical addr
                                     //(3) make the page swappable.
+
         }
         else {
             cprintf("no swap_init_ok but ptep is %x, failed\n",*ptep);
             goto failed;
         }
    }
-#endif
+
    ret = 0;
 failed:
     return ret;
